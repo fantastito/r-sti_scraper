@@ -1,19 +1,31 @@
+import json
 from bs4 import BeautifulSoup
 import requests
 
+##Find alpine week
+
 url = "https://www.lidl.co.uk/c/food-offers/s10023092"
-req = requests.get(url)
 
-soup = BeautifulSoup(req.content, "html.parser")
+def check_for_rösti():
+    response = requests.get(url)
+    if response.status_code == 200:
+        soup = BeautifulSoup(response.content, "html.parser")
 
-target_text = "Flavour of the Week: Sol Y Mar"
-flavour_of_the_week = soup.find('h3', string=lambda t:t and target_text in t)
+        #Find this week's offers section
+        this_week = soup.find(title="This Week's Offers")
 
-# for offer in soup.find_all('h3'):
-#     print(offer)
+        target_text = "Flavour of the Week"
 
-# for date in soup.find_all("p"):
-#     print(date)
-if flavour_of_the_week:
-    print("It's Spanish week!")
-# <h3 class="ATheContentPageCard__Claim">Flavour of the Week: Sol Y Mar</h3>
+        #Find the 'Flavour of the Week' card by searching h3 tags for target with string, checking string not empty
+        flavour_of_the_week = this_week.find('h3', string=lambda t:t and target_text in t)
+        for child in flavour_of_the_week.children:
+            print(child)
+            if 'Alpen Fest' in child:
+                return True
+            else:
+                return False
+
+
+
+check_for_rösti()
+
