@@ -10,8 +10,6 @@ import os
 
 def send_email(subject, body):
     client = boto3.client("ses")
-    # subject = "Get ready for rösti"
-    # body = "It looks like it is Alpen Fest week at Lidl. Go grab some rösti"
     message = {"Subject": {"Data": subject}, "Body": {"Html": {"Data": body}}}
     try:    
         response = client.send_email(
