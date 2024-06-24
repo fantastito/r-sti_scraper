@@ -1,15 +1,41 @@
-import json
 from bs4 import BeautifulSoup
 import requests
+import boto3
+from botocore.exceptions import ClientError
 
-##Find alpine week
+from dotenv import load_dotenv
+import os
 
-url = "https://www.lidl.co.uk/c/food-offers/s10023092"
+#Send email
 
-def check_for_rösti():
+def send_email(subject, body):
+    client = boto3.client("ses")
+    # subject = "Get ready for rösti"
+    # body = "It looks like it is Alpen Fest week at Lidl. Go grab some rösti"
+    message = {"Subject": {"Data": subject}, "Body": {"Html": {"Data": body}}}
+    try:    
+        response = client.send_email(
+            Source='simon.budden@gmail.com',
+            Destination={
+                'ToAddresses': [
+                    'simon.budden@gmail.com',
+                ],
+            },
+            Message = message
+        )
+    except ClientError as e:
+        print(e.response['Error']['Message'])
+    else:
+        print("Email sent! Message ID:"),
+        print(response['MessageId'])
+    
+
+#Trigger AWS Lambda to find if it's alpine week using BeautifulSoup
+def lambda_handler(event, context):
+    url = "https://www.lidl.co.uk/c/food-offers/s10023092"
     response = requests.get(url)
     if response.status_code == 200:
-        soup = BeautifulSoup(response.content, "html.parser")
+        soup = BeautifulSoup(response.content, "lxml")
 
         #Find this week's offers section
         this_week = soup.find(title="This Week's Offers")
@@ -21,11 +47,6 @@ def check_for_rösti():
         for child in flavour_of_the_week.children:
             print(child)
             if 'Alpen Fest' in child:
-                return True
+                send_email("Get ready for rösti", "It looks like it is Alpen Fest week at Lidl. Go grab some rösti")
             else:
-                return False
-
-
-
-check_for_rösti()
-
+                send_email("No rösti this week", "No rösti in Lidl this week, you'll have to cook something else")
